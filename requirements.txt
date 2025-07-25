@@ -1,0 +1,9 @@
+streamlit
+streamlit_option_menu
+dotenv
+langchain
+langchain_huggingface
+langchain_groq
+langchain_chroma
+langchain_core
+langchain_community

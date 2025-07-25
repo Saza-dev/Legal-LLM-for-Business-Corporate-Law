@@ -126,8 +126,40 @@ if selected == "Assistant":
         st.chat_message("assistant").markdown(answer)
         st.session_state.messages.append(AIMessage(content=answer))
 
+# Drafter
 if selected == "Drafter":
-    st.title(f"You have selected {selected}")
+    # Prompts
+    system_prompt = (
+        "You are an Intelligent chatbot who can draft documents according to srilankan business and corporate law and based on the provided context. Apply the laws and rules in the context when drafting the documents. If you dont have the knowledge in the paticular area to draft the document say that you dont know. Give the Drafted document as output"
+        "\n\n"
+        "{context}"
+    )
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system",system_prompt),
+            ("human","{input}"),
+        ]
+    )
+
+    # question answer chain
+    qa_chain = create_stuff_documents_chain(llm,prompt)
+
+    # rag chain
+    rag_chain = create_retrieval_chain(retriever,qa_chain)
+
+    # streamlit input 
+    draft_input = st.text_input("Explain what kind of draft you need ?")
+
+    if draft_input:
+        # Invoking RAG chain
+        response = rag_chain.invoke({"input":draft_input})
+
+        # Output the answer
+        st.write(response["answer"])
+
+
+
 if selected == "Compliance Checker":
     st.title(f"You have selected {selected}")
 if selected == "Summarizer":
