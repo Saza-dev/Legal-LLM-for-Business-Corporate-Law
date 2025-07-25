@@ -19,6 +19,9 @@ from io import BytesIO
 from chromadb.config import Settings
 from langchain.document_loaders import PyPDFLoader
 import tempfile
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.prompts import PromptTemplate
+from langchain.chains.summarize import load_summarize_chain
 
 
 # loading env variables
@@ -55,7 +58,6 @@ selected = option_menu(
         menu_title=None,
         options=["Assistant","Drafter","Compliance Checker","Summarizer"],
         icons = ["robot",'envelope','check','body-text'] ,# boostrap icons
-        default_index=0, # default selected
         orientation='horizontal',
 )
 
@@ -199,6 +201,8 @@ if selected == "Drafter":
 
 
 if selected == "Compliance Checker":
+
+    st.write("Upload the PDF file you want to check for Compliances")
     # Prompt
     system_prompt = (
     "You are an Intelligent chatbot when a user inputs the document you can identify the missing terms or non complient clauses based on the given context and help the user to fix those.If you dont have the knowledge in the paticular area to check the input say that you dont know."
@@ -244,4 +248,39 @@ if selected == "Compliance Checker":
 
 
 if selected == "Summarizer":
-    st.title(f"You have selected {selected}")
+
+    st.write("Upload the PDF file you want to Summarize")
+
+    # Document Input 
+    doc = st.file_uploader("Upload a PDF", type="pdf")
+
+    if doc is not None:
+         # Save uploaded file to a temporary location
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(doc.read())
+            tmp_file_path = tmp_file.name
+
+        # Use PyPDFLoader on the saved file path
+        loader = PyPDFLoader(tmp_file_path)
+        docs = loader.load_and_split()
+
+        final_documents = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=100).split_documents(docs)
+
+        chunks_prompt = """
+        Please summarize the below content:
+        Content: `{text}`
+        summary:
+        """
+        map_prompt_template = PromptTemplate(input_variables=['text'],template=chunks_prompt)
+
+        final_prompt = """ 
+        Provide the final summary of the entire content with these important points. 
+        Add a Titile, Start the precise summary with an introduction and provide the summary in number points for the docs
+        docs = {text} 
+        """
+
+        final_prompt_template = PromptTemplate(input_variables=['text'],template=final_prompt)
+
+        summary_chain= load_summarize_chain(llm=llm,chain_type="map_reduce",map_prompt=map_prompt_template,combine_prompt=final_prompt_template)
+        output = summary_chain.invoke(final_documents)
+        st.write(output["output_text"])
