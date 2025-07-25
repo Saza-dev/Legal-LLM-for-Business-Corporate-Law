@@ -14,6 +14,10 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.messages import HumanMessage, AIMessage
+from docx import Document
+from io import BytesIO
+from chromadb.config import Settings
+
 
 # loading env variables
 load_dotenv()
@@ -24,11 +28,25 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 # LLM from GROQ
 llm = ChatGroq(model="llama3-70b-8192")
 
-# Loading VectorStore
-vectorstore = Chroma(persist_directory="chroma_legal_db", embedding_function=embedding_model)
 
-# Retriver
+
+
+# Define Chroma client settings
+chroma_settings = Settings(
+    persist_directory="chroma_legal_db",
+    anonymized_telemetry=False  # This is important to avoid tenant issues
+)
+
+# Load VectorStore
+vectorstore = Chroma(
+    persist_directory="chroma_legal_db",
+    embedding_function=embedding_model,
+    client_settings=chroma_settings
+)
+
+# Retriever
 retriever = vectorstore.as_retriever()
+
 
 # Streamlit navigations
 selected = option_menu(
@@ -157,6 +175,24 @@ if selected == "Drafter":
 
         # Output the answer
         st.write(response["answer"])
+
+        # Create a Word document in memory
+        doc = Document()
+        doc.add_heading("Drafted Document", level=1)
+        doc.add_paragraph(response["answer"])
+
+        # Save to BytesIO buffer
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+
+        # Streamlit download button
+        st.download_button(
+            label="📄 Download as Word (.docx)",
+            data=buffer,
+            file_name="drafted_document.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
 
 
 

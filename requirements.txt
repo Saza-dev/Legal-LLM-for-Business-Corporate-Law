@@ -7,3 +7,5 @@ langchain_groq
 langchain_chroma
 langchain_core
 langchain_community
+python-docx
+io
