@@ -9,3 +9,4 @@ langchain_core
 langchain_community
 python-docx
 io
+pypdf

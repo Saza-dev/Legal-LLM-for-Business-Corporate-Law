@@ -17,6 +17,8 @@ from langchain_core.messages import HumanMessage, AIMessage
 from docx import Document
 from io import BytesIO
 from chromadb.config import Settings
+from langchain.document_loaders import PyPDFLoader
+import tempfile
 
 
 # loading env variables
@@ -197,6 +199,49 @@ if selected == "Drafter":
 
 
 if selected == "Compliance Checker":
-    st.title(f"You have selected {selected}")
+    # Prompt
+    system_prompt = (
+    "You are an Intelligent chatbot when a user inputs the document you can identify the missing terms or non complient clauses based on the given context and help the user to fix those.If you dont have the knowledge in the paticular area to check the input say that you dont know."
+    "\n\n"
+    "{context}"
+    )
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system",system_prompt),
+            ("human","{input}"),
+        ]
+    )
+
+    # question answer chain
+    qa_chain = create_stuff_documents_chain(llm,prompt)
+
+    # rag chain
+    rag_chain = create_retrieval_chain(retriever,qa_chain)
+
+    # Document Input 
+    doc = st.file_uploader("Upload a PDF", type="pdf")
+    
+
+    if doc is not None:
+        # Save uploaded file to a temporary location
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(doc.read())
+            tmp_file_path = tmp_file.name
+
+        # Use PyPDFLoader on the saved file path
+        loader = PyPDFLoader(tmp_file_path)
+        documents = loader.load()
+
+        # Combine all page contents
+        user_input = ""
+        for page in documents:
+            user_input += page.page_content + "\n"
+
+        # Run through RAG chain
+        response = rag_chain.invoke({"input": user_input})
+        st.write(response["answer"])
+
+
 if selected == "Summarizer":
     st.title(f"You have selected {selected}")
