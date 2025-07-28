@@ -1,4 +1,3 @@
-# Legal-LLM-for-Business-Corporate-Law
 # 🧑‍⚖️ Legal Assistant for Sri Lankan Business & Corporate Law
 
 A Streamlit-based AI Legal Assistant that helps answer questions, draft documents, check legal compliance, and summarize contracts or policies based on Sri Lankan Business and Corporate Law.
