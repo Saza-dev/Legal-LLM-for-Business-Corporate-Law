@@ -90,6 +90,23 @@ streamlit run app.py
 
 ---
 
+### Team Contribution
+```
+22UG1-0825  Overall System
+22UG1-0816  Overall System
+22UG1-0751  Assistant
+22UG1-0714  Assistant
+22UG1-0292  Assistant
+22UG1-0784  Drafter
+22UG1-0580  Drafter
+22UG1-0521  Compliance Checker
+22UG1-0798  Compliance Checker
+22UG1-0561  Summarizer
+22UG1-0536  Summarizer
+            
+```
+
+
 ## 📜 License
 
 This project is licensed under the MIT License.
